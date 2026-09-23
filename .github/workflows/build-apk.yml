@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -41,23 +41,8 @@ jobs:
           test -f buildsrc/nexa-network-ai/settings.gradle.kts
           test -f buildsrc/nexa-network-ai/app/build.gradle.kts
 
-      - name: Restore permanent signing key
-        env:
-          NEXA_KEYSTORE_B64: ${{ secrets.NEXA_KEYSTORE_B64 }}
-          NEXA_SIGNING_PASSWORD: ${{ secrets.NEXA_SIGNING_PASSWORD }}
-        run: |
-          if [ -z "$NEXA_KEYSTORE_B64" ] || [ -z "$NEXA_SIGNING_PASSWORD" ]; then
-            echo "::error::Configure os secrets NEXA_KEYSTORE_B64 e NEXA_SIGNING_PASSWORD antes da build."
-            exit 1
-          fi
-          echo "$NEXA_KEYSTORE_B64" | base64 --decode > buildsrc/nexa-network-ai/app/nexa-update-key.jks
-          chmod 600 buildsrc/nexa-network-ai/app/nexa-update-key.jks
-
-      - name: Build debug APK
+      - name: Build APK
         working-directory: buildsrc/nexa-network-ai
-        env:
-          NEXA_KEYSTORE_PATH: nexa-update-key.jks
-          NEXA_SIGNING_PASSWORD: ${{ secrets.NEXA_SIGNING_PASSWORD }}
         run: gradle :app:assembleDebug --stacktrace --no-daemon
 
       - name: Verify APK
@@ -66,7 +51,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Nexa-Network-AI-v0.2-debug
+          name: Nexa-Network-AI
           path: buildsrc/nexa-network-ai/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 30
